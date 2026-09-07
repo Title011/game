@@ -75,12 +75,19 @@ function confirmPretest(){
      จึงต้องเตือนก่อนเมื่อมีความคืบหน้าค้างอยู่ */
   var s = loadSave();
   if(s && (s.score > 0 || s.unlockedMax > 0)){
-    var ok = confirm(
-      'เริ่มเกมใหม่ตั้งแต่ด่าน 1?\n\n' +
-      'ความคืบหน้าเดิมจะถูกลบ (ด่าน ' + (s.level+1) + ' · คะแนน ' + s.score + ')\n\n' +
-      'ถ้าต้องการเล่นต่อจากเดิม ให้กดปุ่ม "เล่นต่อ" ในกล่องสีเขียวด้านล่างแทน'
-    );
-    if(!ok) return;
+    showConfirm({
+      title:'เริ่มเกมใหม่',
+      message:'เริ่มใหม่ตั้งแต่ด่าน 1?',
+      detail:'ความคืบหน้าเดิมจะถูกลบ — ด่าน <b>' + (s.level+1) +
+             '</b> · คะแนน <b>' + s.score + '</b><br><br>' +
+             'ถ้าต้องการเล่นต่อจากเดิม ให้กดปุ่ม "เล่นต่อ"<br>ในกล่องสีเขียวด้านล่างแทน',
+      icon:'rotate',
+      okText:'เริ่มใหม่',
+      cancelText:'ยกเลิก',
+      danger:true,
+      onConfirm:function(){ showScreen('screen-game'); initGame(); }
+    });
+    return;
   }
 
   showScreen('screen-game');

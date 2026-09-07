@@ -25,6 +25,44 @@
 .btn-tut:hover{border-color:var(--accent);}
 .btn-tut.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700;}
 
+/* CONFIRM — กล่องยืนยันกลาง (แทน confirm() ของเบราว์เซอร์) */
+.modal-confirm-box{max-width:430px;}
+#modal-confirm .modal-body{align-items:center;text-align:center;gap:14px;padding:26px 24px 20px;}
+.confirm-icon{
+  width:72px;height:72px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,212,255,.1);border:2px solid rgba(0,212,255,.35);
+  color:var(--accent);
+}
+.confirm-icon.danger{
+  background:rgba(255,68,68,.1);border-color:rgba(255,68,68,.38);
+  color:var(--danger);
+}
+.confirm-msg{font-size:1.05rem;font-weight:700;color:var(--text);line-height:1.55;}
+.confirm-detail{font-size:.84rem;color:var(--text-dim);line-height:1.75;}
+.confirm-detail b{color:var(--accent2);font-weight:700;}
+#modal-confirm .modal-footer{border-top:none;padding:0 24px 24px;gap:12px;}
+.btn-confirm-cancel,.btn-confirm-ok{
+  flex:1;padding:12px 20px;border-radius:10px;
+  font-size:.92rem;font-weight:700;cursor:pointer;
+}
+.btn-confirm-cancel{
+  background:var(--bg-card);border:1px solid var(--border2);color:var(--text);
+  transition:border-color .15s,color .15s;
+}
+.btn-confirm-cancel:hover{border-color:var(--accent);color:var(--accent);}
+.btn-confirm-ok{
+  background:linear-gradient(135deg,var(--accent),#0090b8);color:#fff;border:none;
+  font-weight:800;box-shadow:0 4px 14px rgba(0,212,255,.3);
+  transition:transform .15s,box-shadow .15s;
+}
+.btn-confirm-ok:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,212,255,.5);}
+.btn-confirm-ok.danger{
+  background:linear-gradient(135deg,#ff5566,#c0392b);
+  box-shadow:0 4px 14px rgba(255,68,68,.35);
+}
+.btn-confirm-ok.danger:hover{box-shadow:0 8px 22px rgba(255,68,68,.55);}
+
 /* RESULT — ผลการตรวจวงจร */
 #result-icon{font-size:3rem;text-align:center;}
 #result-title{font-size:1.3rem;font-weight:700;text-align:center;}
@@ -33,6 +71,22 @@
 .stat-box{background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;padding:10px 18px;text-align:center;}
 .stat-box .stat-val{font-size:1.4rem;font-weight:700;color:var(--accent2);}
 .stat-box .stat-lbl{font-size:.7rem;color:var(--text-dim);margin-top:2px;}
+
+/* SOLUTION HINT — แผนภาพตัวอย่างการต่อ (แสดงตอนตรวจไม่ผ่าน) */
+.hint-box{
+  background:var(--bg-dark);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px 14px;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.hint-title{
+  display:flex;align-items:center;gap:6px;align-self:flex-start;
+  font-size:.8rem;font-weight:700;color:var(--accent2);
+}
+.hint-title svg{color:var(--accent2);}
+/* แผนภาพย่อ-ขยายตามความกว้างกล่อง ไม่ล้นออกนอกจอ */
+.hint-svg{width:100%;height:auto;max-width:100%;display:block;}
+.hint-note{font-size:.78rem;color:var(--text);line-height:1.6;text-align:center;}
+.hint-sub{font-size:.72rem;color:var(--text-dim);opacity:.85;text-align:center;}
 
 /* TOAST — ข้อความแจ้งเตือนด้านล่างจอ */
 #toast{

@@ -144,9 +144,25 @@ function continueGame(){
 
 /* กดปุ่ม "เริ่มใหม่ทั้งหมด" — ล้างข้อมูลบันทึก */
 function askResetSave(){
-  var ok = confirm('ลบความคืบหน้าทั้งหมดและเริ่มใหม่?\n\nคะแนน ด่านที่ผ่านแล้ว และสถานะแบบทดสอบจะหายทั้งหมด');
-  if(!ok) return;
-  clearSave();
-  renderResumeBox();
-  showToast('ลบข้อมูลที่บันทึกไว้แล้ว','');
+  var s = loadSave();
+  var detail = s
+    ? 'คะแนน <b>' + s.score + '</b> · ผ่านแล้ว <b>' +
+      Object.keys(s.doneLevels).length + ' ด่าน</b><br>' +
+      'รวมถึงสถานะการทำแบบทดสอบ จะหายทั้งหมด'
+    : 'ข้อมูลที่บันทึกไว้จะถูกลบทั้งหมด';
+
+  showConfirm({
+    title:'เริ่มใหม่ทั้งหมด',
+    message:'ลบความคืบหน้าทั้งหมดแล้วเริ่มใหม่?',
+    detail:detail,
+    icon:'trash',
+    okText:'ลบและเริ่มใหม่',
+    cancelText:'ไม่ลบ',
+    danger:true,
+    onConfirm:function(){
+      clearSave();
+      renderResumeBox();
+      showToast('ลบข้อมูลที่บันทึกไว้แล้ว','');
+    }
+  });
 }

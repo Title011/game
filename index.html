@@ -182,6 +182,26 @@
   </div>
 </div>
 
+<!-- MODAL CONFIRM — กล่องยืนยันกลาง ใช้แทน confirm() ของเบราว์เซอร์
+     เรียกผ่าน showConfirm({...}) ใน js/ui.js -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box modal-confirm-box">
+    <div class="modal-header">
+      <h3 id="confirm-title">ยืนยัน</h3>
+      <button class="modal-close" onclick="closeConfirm(false)">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon" id="confirm-icon"></div>
+      <div class="confirm-msg" id="confirm-msg">&#x2014;</div>
+      <div class="confirm-detail" id="confirm-detail"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm-cancel" id="confirm-cancel-btn" onclick="closeConfirm(false)">ยกเลิก</button>
+      <button class="btn-confirm-ok" id="confirm-ok-btn" onclick="closeConfirm(true)">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL RESULT -->
 <div id="modal-result" class="modal-overlay">
   <div class="modal-box">
