@@ -27,6 +27,9 @@ var SAVE_OK = (function(){
 /* ---------- เขียน ---------- */
 function saveGame(){
   if(!SAVE_OK) return;
+  /* โหมดอิสระ/ไม่รู้จบ เปลี่ยนคลังอุปกรณ์และคะแนนชั่วคราว
+     ห้ามเขียนทับความคืบหน้าจริงของผู้เล่น */
+  if(G.sandbox || G.endless) return;
   try{
     localStorage.setItem(SAVE_KEY, JSON.stringify({
       v:1,
@@ -36,6 +39,7 @@ function saveGame(){
       doneLevels:  G.doneLevels,
       unlockedMax: G.unlockedMax,
       finished:    !!G.finished,
+      modesUnlocked: !!G.modesUnlocked,
       pretest:     !!FormStatus.pretest,
       posttest:    !!FormStatus.posttest,
       savedAt:     Date.now()
@@ -91,6 +95,14 @@ function restoreFormStatus(){
     FormStatus.posttest = true;
     applyFormStatusUI('posttest');
   }
+}
+
+/* คืนสถานะปลดล็อกโหมดพิเศษตั้งแต่เปิดหน้า
+   ปลดล็อกครั้งเดียวติดตลอด แม้จะเริ่มเกมใหม่ก็ไม่หาย */
+function restoreUnlocks(){
+  var s = loadSave();
+  if(s && s.modesUnlocked) G.modesUnlocked = true;
+  updateModeButtons();
 }
 
 /* ============================================================

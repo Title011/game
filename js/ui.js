@@ -44,6 +44,9 @@ function injectUIIcons(){
     var el = document.getElementById(id);
     if(el) el.innerHTML = ICON(map[id], sizes[id]||18);
   }
+  /* ปุ่มโหมดพิเศษเปลี่ยนทั้งไอคอนและข้อความตามสถานะ จึงมีฟังก์ชันของตัวเอง */
+  if(typeof updateSandboxButton === 'function') updateSandboxButton();
+  if(typeof updateEndlessButton === 'function') updateEndlessButton();
 }
 
 /* ============================================================

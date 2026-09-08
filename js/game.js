@@ -26,6 +26,8 @@ function resumeGame(s){
   G.doneLevels  = s.doneLevels;
   G.unlockedMax = s.unlockedMax;
   G.finished    = false;
+  G.modesUnlocked = !!s.modesUnlocked;   /* ปลดล็อกแล้วต้องยังปลดล็อกอยู่ */
+  updateModeButtons();
   buildLevelBar();
   loadLevel(Math.min(s.level, LEVELS.length-1));
   showToast('เล่นต่อจากด่าน '+(G.level+1)+' · คะแนน '+G.score,'success');
@@ -62,13 +64,30 @@ function updateLevelBar(){
     }
     dot.className=cls;
   });
-  document.getElementById('hud-level').textContent=(G.level+1)+'/'+LEVELS.length;
-  document.getElementById('hud-score').textContent=G.score;
-  document.getElementById('hud-lives').innerHTML = renderHearts(G.lives, 3);
+  /* โหมดอิสระ/ไม่รู้จบไม่มีเลขด่านและไม่เสียชีวิต แสดงเป็นสัญลักษณ์แทน */
+  document.getElementById('hud-level').textContent =
+    G.sandbox ? 'อิสระ'
+    : G.endless ? ('รอบ '+G.endlessRound)
+    : (G.level+1)+'/'+LEVELS.length;
+  document.getElementById('hud-score').textContent = G.endless ? G.endlessScore : G.score;
+  document.getElementById('hud-lives').innerHTML =
+    (G.sandbox||G.endless) ? '<span class="hud-inf">∞</span>' : renderHearts(G.lives, 3);
 }
 
 function loadLevel(idx){
   if(idx>=LEVELS.length){endGame();return;}
+  /* ออกจากโหมดพิเศษอัตโนมัติ ครอบคลุมทั้งปุ่มกลับสู่ด่าน
+     และการกดจุดด่านบนแถบด้านบนขณะอยู่ในโหมดอิสระ/ไม่รู้จบ */
+  if(G.sandbox){
+    G.sandbox=false;
+    document.body.classList.remove('sandbox-mode');
+    updateSandboxButton();
+  }
+  if(G.endless){
+    G.endless=false; G.genLevel=null;
+    document.body.classList.remove('endless-mode');
+    updateEndlessButton();
+  }
   G.level=idx;
   if(idx>G.unlockedMax) G.unlockedMax=idx;  /* จำด่านไกลสุดที่ปลดล็อก */
   clearInterval(G.timerInt);
@@ -101,6 +120,8 @@ function updateTimerDisplay(){
   document.getElementById('timer-display').textContent=mm+':'+ss;
 }
 function onTimeUp(){
+  /* โหมดไม่รู้จบ: หมดเวลา = จบรัน ไปหน้าตารางอันดับ */
+  if(G.endless){ endEndlessRun('หมดเวลา'); return; }
   G.lives--;
   updateLevelBar();
   saveGame();   /* บันทึกจำนวนชีวิตที่เหลือ */
@@ -112,7 +133,10 @@ function onTimeUp(){
    CHECK + POWER ANIMATIONS
    ============================================================ */
 function checkCircuit(){
-  var lv=LEVELS[G.level];
+  /* โหมดอิสระ: ไม่มีเฉลยให้เทียบ ไม่มีคะแนน ไม่เสียชีวิต */
+  if(G.sandbox){ sandboxCheck(); return; }
+
+  var lv=currentLevel();
   var result=lv.check(G.wsItems,G.wires);
   /* เช็คเทียบเฉลย (ยืดหยุ่น: สลับซ้ายขวา/กลับทิศได้ แต่การเชื่อมต้องครบ ไม่เกิน ขั้วถูก) */
   if(result.ok && lv.solution){
@@ -120,6 +144,10 @@ function checkCircuit(){
     if(!exact.ok) result = exact;
   }
   var elapsed=Math.floor((Date.now()-G.levelStartTime)/1000);
+
+  /* โหมดไม่รู้จบมีระบบคะแนน/เวลาของตัวเอง ไม่ยุ่งกับคะแนนและชีวิตของโหมดด่าน */
+  if(G.endless){ endlessResult(result, elapsed); return; }
+
   if(result.ok){
     clearInterval(G.timerInt);
     /* เปิด animation ทุก ws-item */
@@ -300,7 +328,7 @@ function buildParallelDiagram(lv){
 
 /* สร้างคำใบ้: ตัวอย่างการต่อสายของด่านนี้ (เป็นแผนภาพ) */
 function buildSolutionHint(){
-  var lv = LEVELS[G.level];
+  var lv = currentLevel();
   if(!lv.solution) return '<div class="hint-box"><div class="hint-note">เปิด "คู่มือ" เพื่อดูคำแนะนำ</div></div>';
 
   var isParallel = lv.topology && lv.topology.type === 'parallel';
@@ -350,6 +378,8 @@ function nextLevel(){
   G.wsItems.forEach(function(i){i.el.classList.remove('powered');});
   stopCurrentFlow();
   if(G.probeMode) toggleProbeMode();
+  /* โหมดไม่รู้จบ: ปุ่มนี้คือ "รอบถัดไป" สุ่มโจทย์ใหม่ ไม่ใช่เลื่อนด่าน */
+  if(G.endless){ loadEndlessRound(); return; }
   var next=G.level+1;
   if(next>=LEVELS.length) endGame();
   else loadLevel(next);
@@ -358,15 +388,32 @@ function nextLevel(){
 function endGame(){
   clearInterval(G.timerInt);
   G.finished=true;
+  var firstTime = !G.modesUnlocked;
+  G.modesUnlocked=true;          /* รางวัล: ปลดล็อกโหมดอิสระ + โหมดไม่รู้จบ */
+  updateModeButtons();
   saveGame();   /* บันทึกว่าเล่นจบครบทุกด่านแล้ว */
   showScreen('screen-posttest');
+  if(firstTime) showToast('ปลดล็อกโหมดพิเศษแล้ว! โหมดอิสระ และ โหมดไม่รู้จบ','success');
+}
+
+/* โหมดพิเศษ (อิสระ/ไม่รู้จบ) โผล่หลังเล่นครบทุกด่านแล้วเท่านั้น
+   ซ่อน/แสดงด้วยคลาสเดียวบน body — ดู css/game-layout.css */
+function updateModeButtons(){
+  document.body.classList.toggle('modes-unlocked', !!G.modesUnlocked);
+  var box = document.getElementById('unlock-box');
+  if(box) box.style.display = G.modesUnlocked ? '' : 'none';
 }
 
 /* ============================================================
    TUTORIAL
    ============================================================ */
 function openTutorial(){
-  G.tutPages=LEVELS[G.level].tutorial;
+  /* โหมดอิสระไม่มีคู่มือประจำด่าน */
+  if(G.sandbox){
+    showToast('โหมดอิสระไม่มีคู่มือประจำด่าน — กด "กลับสู่ด่าน" เพื่อดูคู่มือ','');
+    return;
+  }
+  G.tutPages=currentLevel().tutorial;
   G.tutIdx=0;
   renderTutPage();
   openModal('modal-tutorial');
@@ -392,6 +439,7 @@ function changeTutPage(dir){
 document.addEventListener('DOMContentLoaded', function(){
   injectUIIcons();
   restoreFormStatus(); /* เคยทำข้อสอบก่อนเรียนแล้ว → ปลดล็อกให้เลย ไม่ต้องทำซ้ำ */
+  restoreUnlocks();    /* เคยเล่นจบครบทุกด่านไหม → โชว์ปุ่มโหมดพิเศษ */
   renderResumeBox();   /* มีข้อมูลบันทึกไว้ไหม → โชว์กล่อง "เล่นต่อ" */
   var ws = document.getElementById('workspace');
   if(ws){
