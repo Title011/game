@@ -10,6 +10,11 @@ var G = {
   level:0, score:0, lives:3,
   unlockedMax:0,  /* ด่านสูงสุดที่ปลดล็อกแล้ว (กลับไปเล่นด่านที่ผ่านมาได้) */
   finished:false, /* เล่นครบทุกด่านแล้ว (ไปหน้าแบบทดสอบหลังเรียน) */
+  /* ปลดล็อกโหมดพิเศษ (อิสระ/ไม่รู้จบ) — ติดถาวรเมื่อเล่นครบทุกด่านครั้งแรก
+     ต่างจาก finished ตรงที่ initGame() จะไม่รีเซ็ตค่านี้ */
+  modesUnlocked:false,
+  sandbox:false,  /* อยู่ในโหมดอิสระ — ไม่จับเวลา ไม่เสียชีวิต ไม่บันทึกทับ */
+  endless:false, endlessRound:1, endlessScore:0, genLevel:null,  /* โหมดไม่รู้จบ */
   timerSec:0, timerInt:null, levelStartTime:0,
   doneLevels:{},
   wsItems:[], wsCounter:0,
@@ -28,6 +33,13 @@ var G = {
 /* ============================================================
    HELPERS
    ============================================================ */
+/* ด่านที่กำลังเล่นอยู่
+   โหมดปกติ = ด่านจาก LEVELS, โหมดไม่รู้จบ = ด่านที่สุ่มสร้างขึ้นมา
+   ทุกที่ที่เคยอ่าน LEVELS[G.level] ตรง ๆ ต้องเรียกผ่านฟังก์ชันนี้แทน */
+function currentLevel(){
+  return (G.endless && G.genLevel) ? G.genLevel : LEVELS[G.level];
+}
+
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
