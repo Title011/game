@@ -193,7 +193,7 @@ function endlessResult(result, elapsed){
     showToast(result.msg,'error');
     if(G.endlessLives <= 0){
       clearInterval(G.timerInt);
-      schedulePending(function(){ endEndlessRun('ต่อวงจรผิด'); }, 1200);
+      setTimeout(function(){ endEndlessRun('ต่อวงจรผิด'); }, 1200);
     }
   }
 }
@@ -217,7 +217,6 @@ function showEndlessWin(earned, bonus, elapsed){
 
 /* จบรัน — หมดเวลา หรือกดออกเอง */
 function endEndlessRun(reason){
-  cancelPending();   /* กันจบรันซ้ำ เมื่อกด "จบรัน" เองระหว่างที่ตั้งเวลาจบไว้แล้ว */
   clearInterval(G.timerInt);
   stopCurrentFlow();
   closeModal('modal-result');
@@ -272,19 +271,7 @@ function loadBoard(){
     var raw = localStorage.getItem(LB_KEY);
     if(!raw) return [];
     var a = JSON.parse(raw);
-    if(Object.prototype.toString.call(a) !== '[object Array]') return [];
-    /* คัดแถวที่รูปร่างไม่ถูกทิ้ง ด้วยมาตรฐานเดียวกับ loadSave() ใน js/save.js
-       renderLeaderboard() เอา score/round ใส่ innerHTML ตรง ๆ ถ้าปล่อยค่าแปลก ๆ
-       เข้าไป หน้าจบรันจะพังทั้งหน้า (หรือกลายเป็นช่องฝัง HTML) */
-    return a.filter(function(r){
-      return r && typeof r === 'object' &&
-             typeof r.name === 'string' &&
-             typeof r.score === 'number' && isFinite(r.score);
-    }).map(function(r){
-      return { name:r.name, score:r.score,
-               round:(typeof r.round === 'number' && isFinite(r.round)) ? r.round : null,
-               at:r.at };
-    });
+    return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
   }catch(e){ return []; }
 }
 
