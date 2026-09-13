@@ -17,6 +17,9 @@ var G = {
   /* โหมดวัดความเร็ว — มีชีวิตเดียว ตอบผิดครั้งเดียวจบรัน */
   endless:false, endlessRound:1, endlessScore:0, endlessLives:1, genLevel:null,
   timerSec:0, timerInt:null, levelStartTime:0,
+  /* ตัวจับเวลาของ "การเปลี่ยนสถานะแบบหน่วงเวลา" ที่ตั้งค้างไว้
+     (โหลดด่านซ้ำ / เริ่มเกมใหม่ / จบรันวัดความเร็ว) — ดู schedulePending() */
+  pendingTimer:null,
   doneLevels:{},
   wsItems:[], wsCounter:0,
   wires:[], wireCounter:0,
@@ -44,6 +47,21 @@ function currentLevel(){
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById(id).classList.add('active');
+}
+
+/* ด่านสุดท้ายคือเงื่อนไขปลดล็อกโหมดพิเศษ — กันไว้เผื่อเรียกฟังก์ชันตรง ๆ
+   คืน false เมื่อยังไม่ปลดล็อก ผู้เรียกต้อง return ทันที
+   (ใช้ร่วมกันโดย enterSandbox() และ enterEndless()) */
+function specialModeReady(){
+  if(!G.modesUnlocked){
+    showToast('ปลดล็อกโหมดนี้ได้หลังเล่นครบทุกด่าน','error');
+    return false;
+  }
+  /* ผู้เล่นเลือกเข้าโหมดพิเศษเองแล้ว ทิ้งการโหลดด่านซ้ำ/เริ่มเกมใหม่
+     ที่อาจตั้งค้างไว้จากตอนหมดเวลาหรือหมดชีวิต ไม่งั้นมันจะเด้งออกมาทับ */
+  cancelPending();
+  showScreen('screen-game');
+  return true;
 }
 
 /* ============================================================

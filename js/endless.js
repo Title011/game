@@ -153,12 +153,7 @@ function toggleEndless(){
 }
 
 function enterEndless(){
-  /* ด่านสุดท้ายคือเงื่อนไขปลดล็อก — กันไว้เผื่อเรียกฟังก์ชันตรง ๆ */
-  if(!G.modesUnlocked){
-    showToast('ปลดล็อกโหมดนี้ได้หลังเล่นครบทุกด่าน','error');
-    return;
-  }
-  showScreen('screen-game');
+  if(!specialModeReady()) return;
   if(G.sandbox){ G.sandbox=false; document.body.classList.remove('sandbox-mode'); updateSandboxButton(); }
   G.endless = true;
   G.endlessRound = 1;
@@ -172,28 +167,9 @@ function enterEndless(){
 
 function loadEndlessRound(){
   G.genLevel = buildEndlessLevel(G.endlessRound);
-  var lv = G.genLevel;
-
   clearInterval(G.timerInt);
-  cancelTapConnect();
-  if(G.probeMode) toggleProbeMode();
-  stopCurrentFlow();
-  deselectAll();
-  clearWorkspace(true);
-
-  G.invCounts = Object.assign({}, lv.inventory);
-  renderInventory();
-  document.getElementById('goal-title').textContent = lv.title;
-  document.getElementById('goal-desc').textContent  = lv.goal;
-  setGoalOutcome(lv.outcome);
-
-  G.timerSec = lv.timeLimit;
-  G.levelStartTime = Date.now();
-  updateTimerDisplay();
-  document.getElementById('timer-display').classList.remove('warning');
-  G.timerInt = setInterval(tickTimer,1000);
-  updateLevelBar();
-  ensureBreadboard();
+  resetPlayfield();
+  applyLevelToScreen(G.genLevel);
 }
 
 /* ผลการตรวจในโหมดวัดความเร็ว — เรียกจาก checkCircuit() */
@@ -217,7 +193,7 @@ function endlessResult(result, elapsed){
     showToast(result.msg,'error');
     if(G.endlessLives <= 0){
       clearInterval(G.timerInt);
-      setTimeout(function(){ endEndlessRun('ต่อวงจรผิด'); }, 1200);
+      schedulePending(function(){ endEndlessRun('ต่อวงจรผิด'); }, 1200);
     }
   }
 }
@@ -241,6 +217,7 @@ function showEndlessWin(earned, bonus, elapsed){
 
 /* จบรัน — หมดเวลา หรือกดออกเอง */
 function endEndlessRun(reason){
+  cancelPending();   /* กันจบรันซ้ำ เมื่อกด "จบรัน" เองระหว่างที่ตั้งเวลาจบไว้แล้ว */
   clearInterval(G.timerInt);
   stopCurrentFlow();
   closeModal('modal-result');
@@ -295,7 +272,19 @@ function loadBoard(){
     var raw = localStorage.getItem(LB_KEY);
     if(!raw) return [];
     var a = JSON.parse(raw);
-    return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
+    if(Object.prototype.toString.call(a) !== '[object Array]') return [];
+    /* คัดแถวที่รูปร่างไม่ถูกทิ้ง ด้วยมาตรฐานเดียวกับ loadSave() ใน js/save.js
+       renderLeaderboard() เอา score/round ใส่ innerHTML ตรง ๆ ถ้าปล่อยค่าแปลก ๆ
+       เข้าไป หน้าจบรันจะพังทั้งหน้า (หรือกลายเป็นช่องฝัง HTML) */
+    return a.filter(function(r){
+      return r && typeof r === 'object' &&
+             typeof r.name === 'string' &&
+             typeof r.score === 'number' && isFinite(r.score);
+    }).map(function(r){
+      return { name:r.name, score:r.score,
+               round:(typeof r.round === 'number' && isFinite(r.round)) ? r.round : null,
+               at:r.at };
+    });
   }catch(e){ return []; }
 }
 
