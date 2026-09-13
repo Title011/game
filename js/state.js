@@ -17,9 +17,6 @@ var G = {
   /* โหมดวัดความเร็ว — มีชีวิตเดียว ตอบผิดครั้งเดียวจบรัน */
   endless:false, endlessRound:1, endlessScore:0, endlessLives:1, genLevel:null,
   timerSec:0, timerInt:null, levelStartTime:0,
-  /* ตัวจับเวลาของ "การเปลี่ยนสถานะแบบหน่วงเวลา" ที่ตั้งค้างไว้
-     (โหลดด่านซ้ำ / เริ่มเกมใหม่ / จบรันวัดความเร็ว) — ดู schedulePending() */
-  pendingTimer:null,
   doneLevels:{},
   wsItems:[], wsCounter:0,
   wires:[], wireCounter:0,
@@ -31,6 +28,11 @@ var G = {
   probeMode:false,  /* โหมดเครื่องวัดกระแส */
   tapFromForcedPol:null, tapToForcedPol:null,  /* ขั้วที่เลือกตอนต่อสาย */
   pendingPickPort:null, pendingPickRole:null, dragPending:null,  /* popup เลือกขั้ว */
+  /* คลิปบอร์ดคัดลอก-วางอุปกรณ์ (Ctrl+C / Ctrl+V และปุ่ม ⧉ บนตัวอุปกรณ์)
+     dx,dy = ระยะห่างที่ "เรียนรู้" จากการที่ผู้เล่นลากชิ้นที่วางล่าสุดไปเอง
+     วางครั้งถัดไปจะใช้ระยะเดิมซ้ำ = เรียงของเป็นแถวได้ในไม่กี่คลิก
+     (ดู duplicateItem / pasteItem ใน js/workspace.js) */
+  clip:null,
   tutPages:[], tutIdx:0,
 };
 
@@ -57,9 +59,6 @@ function specialModeReady(){
     showToast('ปลดล็อกโหมดนี้ได้หลังเล่นครบทุกด่าน','error');
     return false;
   }
-  /* ผู้เล่นเลือกเข้าโหมดพิเศษเองแล้ว ทิ้งการโหลดด่านซ้ำ/เริ่มเกมใหม่
-     ที่อาจตั้งค้างไว้จากตอนหมดเวลาหรือหมดชีวิต ไม่งั้นมันจะเด้งออกมาทับ */
-  cancelPending();
   showScreen('screen-game');
   return true;
 }

@@ -92,7 +92,6 @@ function applyLevelToScreen(lv){
 }
 
 function loadLevel(idx){
-  cancelPending();   /* ผู้เล่นเลือกด่านเองแล้ว ทิ้งการโหลด/รีเซ็ตที่ตั้งค้างไว้ */
   if(idx>=LEVELS.length){endGame();return;}
   /* ออกจากโหมดพิเศษอัตโนมัติ ครอบคลุมทั้งปุ่มกลับสู่ด่าน
      และการกดจุดด่านบนแถบด้านบนขณะอยู่ในโหมดอิสระ/วัดความเร็ว */
@@ -217,8 +216,8 @@ function onTimeUp(){
   G.lives--;
   updateLevelBar();
   saveGame();   /* บันทึกจำนวนชีวิตที่เหลือ */
-  if(G.lives<=0){showToast('หมดชีวิต! เริ่มใหม่...','error');schedulePending(initGame,2000);}
-  else{showToast('หมดเวลา! เหลือ '+G.lives+' ชีวิต','error');schedulePending(function(){loadLevel(G.level);},2000);}
+  if(G.lives<=0){showToast('หมดชีวิต! เริ่มใหม่...','error');setTimeout(initGame,2000);}
+  else{showToast('หมดเวลา! เหลือ '+G.lives+' ชีวิต','error');setTimeout(function(){loadLevel(G.level);},2000);}
 }
 
 /* ============================================================
@@ -342,9 +341,9 @@ function checkCircuit(){
 
 /* หมดชีวิตแล้ว — ให้เวลาอ่านกล่องผลลัพธ์ก่อน แล้วค่อยเริ่มเกมใหม่ */
 function scheduleGameOver(){
-  schedulePending(function(){
+  setTimeout(function(){
     showToast('หมดชีวิตแล้ว! เริ่มเกมใหม่','error');
-    schedulePending(initGame, 1500);
+    setTimeout(initGame, 1500);
   }, 1500);
 }
 
@@ -390,28 +389,6 @@ function cancelHazardSequence(){
   PowerSim.onIncident = null;
   G.hazardPlaying = false;
   document.body.classList.remove('hazard-live');
-}
-
-/* ============================================================
-   การเปลี่ยนสถานะแบบหน่วงเวลา (โหลดด่านซ้ำ / เริ่มเกมใหม่ / จบรัน)
-
-   ต้องยกเลิกได้ ด้วยเหตุผลเดียวกับ G.hazardTimer: ระหว่างนับถอยหลัง
-   ผู้เล่นยังกดอะไรก็ได้ ถ้าปล่อยให้ตัวจับเวลาทำงานต่อ มันจะเด้งมาทับ
-   สิ่งที่กำลังเล่นอยู่ — กดจุดด่านอื่นแล้ววางอุปกรณ์ไปแล้วโดนล้างทิ้ง,
-   เข้าโหมดอิสระ/วัดความเร็วแล้วถูกดีดออก, และกรณีร้ายที่สุดคือ
-   initGame() ล้างคะแนนสะสมทั้งหมดทิ้ง
-
-   มีได้ทีละรายการเดียว รายการใหม่แทนที่รายการเก่าเสมอ
-   ============================================================ */
-function schedulePending(fn, ms){
-  cancelPending();
-  G.pendingTimer = setTimeout(function(){
-    G.pendingTimer = null;
-    fn();
-  }, ms);
-}
-function cancelPending(){
-  if(G.pendingTimer){ clearTimeout(G.pendingTimer); G.pendingTimer = null; }
 }
 
 /* ============================================================
@@ -804,7 +781,6 @@ function nextLevel(){
 }
 
 function endGame(){
-  cancelPending();
   clearInterval(G.timerInt);
   G.finished=true;
   var firstTime = !G.modesUnlocked;
@@ -934,6 +910,20 @@ document.addEventListener('keydown',function(e){
 
   /* ทุกคีย์ลัดเทียบผ่าน isKey/isNamedKey (js/ui.js)
      ซึ่งดู e.code + e.keyCode ก่อน e.key จึงใช้ได้ทุกภาษาแป้นพิมพ์ */
+
+  /* Ctrl/Cmd + ตัวอักษร = คีย์ลัดคัดลอก-วาง ต้องแยกออกมาก่อนคีย์ลัดตัวเปล่า
+     ไม่งั้น Ctrl+C จะไปเข้าเงื่อนไข "C = ตรวจวงจร" ด้านล่าง
+     (จบด้วย return ทุกทาง คีย์ลัดตัวเปล่าจึงไม่ทำงานซ้อนแน่นอน) */
+  if(e.ctrlKey || e.metaKey){
+    if(isKey(e,'c')){ e.preventDefault(); copyItem(G.selectedItemId); return; }
+    if(isKey(e,'v')){ e.preventDefault(); pasteItem(); return; }
+    if(isKey(e,'d')){ e.preventDefault();                 /* Ctrl+D = คัดลอก+วางทันที */
+      if(G.selectedItemId) duplicateItem(G.selectedItemId);
+      else showToast('คลิกเลือกอุปกรณ์ก่อน','error');
+      return;
+    }
+    return;   /* Ctrl ค้างอยู่ = ไม่ใช่คีย์ลัดของเกม ปล่อยให้เบราว์เซอร์จัดการ */
+  }
 
   /* R = หมุนอุปกรณ์ที่เลือกอยู่ 90° */
   if(isKey(e,'r')){
