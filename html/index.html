@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>วงจรไฟฟ้า — เกมการเรียนรู้</title>
+
+<!-- ===== STYLES (เรียงตามลำดับ ห้ามสลับ responsive.css ต้องอยู่ท้ายสุด)
+     coach.css ต้องอยู่หลัง breadboard.css ด้วย — มันมีกฎเลือกสำนวนข้อความ
+     ตามชนิดเครื่อง ซึ่งต้องชนะกฎ .hint-board ของแผง (ดูคอมเมนต์ในไฟล์) ===== -->
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/test-screens.css">
+<link rel="stylesheet" href="css/game-layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/circuit.css">
+<link rel="stylesheet" href="css/breadboard.css">
+<link rel="stylesheet" href="css/hazard.css">
+<link rel="stylesheet" href="css/modals.css">
+<link rel="stylesheet" href="css/coach.css">
+<link rel="stylesheet" href="css/stars.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+<!-- PRE-TEST -->
+<section id="screen-pretest" class="screen active">
+  <div class="test-container">
+    <h1><span id="pretest-bolt"></span> วงจรไฟฟ้า &#x2014; ข้อสอบก่อนเรียน</h1>
+    <p>กรุณากดปุ่มด้านล่างเพื่อทำแบบทดสอบก่อนเรียน<br>เมื่อทำเสร็จแล้วให้กลับมาที่หน้านี้แล้วกดยืนยัน</p>
+
+    <div class="form-link-box">
+      <a class="btn-form-link" id="pretest-link" href="https://docs.google.com/forms/d/e/1FAIpQLScTH9m6jwcXQXulqdEalvcuU2cry6TtsnvLMiQGWabGrabIiw/viewform" target="_blank" rel="noopener" onclick="onFormLinkClick('pretest')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 3h7v7M21 3l-9 9M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/>
+        </svg>
+        <span id="pre-ic"></span> เปิดแบบทดสอบก่อนเรียน
+      </a>
+      <div class="form-status" id="pretest-status">
+        <span class="status-dot"></span>
+        <span id="pretest-status-text">ยังไม่ได้กดเข้าทำแบบทดสอบ</span>
+      </div>
+      <span class="form-hint">* ปุ่มจะเปิดแบบทดสอบในแท็บใหม่ และระบบจะปลดล็อกปุ่ม "เข้าสู่เกม" ให้อัตโนมัติ</span>
+      <button class="form-manual" onclick="manualFormDone('pretest')">ทำแบบทดสอบแล้วแต่ปุ่มยังล็อกอยู่? แตะที่นี่</button>
+    </div>
+
+    <button class="btn-primary locked" id="pretest-continue-btn" onclick="confirmPretest()">
+      <span id="enter-ic"></span> เข้าสู่เกมเรียนรู้
+    </button>
+
+    <!-- กล่อง "เล่นต่อ" — JS จะเปิดให้เองเมื่อพบข้อมูลที่บันทึกไว้ (js/save.js) -->
+    <div class="resume-box" id="resume-box" style="display:none;">
+      <div>
+        <div class="resume-title">พบความคืบหน้าที่บันทึกไว้ในเครื่องนี้</div>
+        <div class="resume-detail" id="resume-detail">&#x2014;</div>
+      </div>
+      <div class="resume-actions">
+        <button class="btn-resume" onclick="continueGame()">เล่นต่อ</button>
+        <button class="btn-reset-save" onclick="askResetSave()">เริ่มใหม่ทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section id="screen-game" class="screen">
+  <header id="game-header">
+    <h2><span class="hdr-icon" id="hdr-bolt"></span> วงจรไฟฟ้า &#x2014; เกมการเรียนรู้</h2>
+    <div class="hud-item"><span class="hud-label">ด่าน</span><span class="hud-value" id="hud-level">1/20</span></div>
+    <div class="hud-item"><span class="hud-label">คะแนน</span><span class="hud-value" id="hud-score">0</span></div>
+    <div class="hud-item"><span class="hud-label">เวลา</span><span class="hud-value" id="timer-display">03:00</span></div>
+    <div class="hud-item"><span class="hud-label">ชีวิต</span><span class="hud-value hud-hearts" id="hud-lives"></span></div>
+    <button class="btn-endless" id="btn-endless" onclick="toggleEndless()">วัดความเร็ว</button>
+    <button class="btn-sandbox" id="btn-sandbox" onclick="toggleSandbox()">โหมดอิสระ</button>
+    <button class="btn-tutorial" onclick="openTutorial()"><span id="btn-book-ic"></span> คู่มือ</button>
+    <!-- ปิดเสียง — เกมที่มีเสียงต้องมีปุ่มปิดเสมอ และต้องหาเจอโดยไม่ต้องเปิดเมนู
+         เพราะคนที่อยากปิดคือคนที่กำลังรำคาญอยู่พอดี (ดู js/sfx.js) -->
+    <button class="btn-sound" id="btn-sound" onclick="toggleSfx()"
+            title="ปิดเสียง" aria-label="เปิด/ปิดเสียง" aria-pressed="true"><span class="sound-ico">&#x1F50A;</span></button>
+    <!-- เพลงพื้นหลัง — ปุ่มเปิด/ปิด + แถบเลื่อนระดับเสียง
+         แถบเลื่อนซ่อนบนจอเล็ก (ดู responsive.css) เพราะแถบหัวแน่นเกินไป
+         วิธีใส่ไฟล์ .mp3 อธิบายไว้ที่หัวไฟล์ js/bgm.js -->
+    <button class="btn-sound" id="btn-music" onclick="toggleBgm()"
+            title="ปิดเพลงพื้นหลัง" aria-label="เปิด/ปิดเพลงพื้นหลัง" aria-pressed="true"><span class="sound-ico">&#x1F3B5;</span></button>
+    <input type="range" class="bgm-vol" id="bgm-vol" min="0" max="100" step="5" value="35"
+           title="ระดับเสียงเพลง" aria-label="ระดับเสียงเพลง"
+           oninput="bgmSetVolume(this.value/100)">
+  </header>
+  <div id="level-bar"><span id="level-bar-label">ด่าน:</span></div>
+  <div id="game-main">
+    <aside id="inventory"><h3><span id="inv-box-ic"></span> คลังอุปกรณ์</h3></aside>
+    <div id="workspace-wrap">
+      <div id="level-goal">
+        <span id="goal-target-ic"></span> <strong id="goal-title">&#x2014;</strong>
+        <span id="goal-desc">&#x2014;</span>
+        <span id="goal-outcome" class="goal-outcome" style="display:none;"></span>
+      </div>
+      <div id="workspace"
+        ondragover="onWsDragOver(event)"
+        ondrop="onWsDrop(event)"
+        ondragleave="onWsDragLeave()">
+        <!-- คำแนะนำมี 2 ชุด เพราะพื้นที่ทำงานมี 2 แบบ
+             ด่านปกติ = พื้นที่ว่าง วางตรงไหนก็ได้แล้วเดินสายเอง
+             ด่านเบรดบอร์ด = แผงจริง ขาที่อยู่รางเดียวกันต่อถึงกันเอง
+             สลับด้วยคลาส body.has-breadboard (ดู css/breadboard.css) -->
+        <!-- ข้อความแนะนำแยกสองสำนวนตามเครื่องที่เล่น (.hint-mouse / .hint-touch)
+             สลับด้วยคลาส body.is-touch — ดู js/coach.js และ css/coach.css
+             เหตุผล: บอกคีย์ลัดกับคนที่ไม่มีแป้นพิมพ์คือคำแนะนำที่ทำตามไม่ได้
+             และบนจอมือถือข้อความพวกนี้กินที่ของพื้นที่ต่อวงจรไปมาก -->
+        <div id="workspace-hint">
+          <span class="hint-free">ลากอุปกรณ์จากคลังมาวางบนพื้นที่ทำงาน</span>
+          <span class="hint-board">ลากอุปกรณ์จากคลังมาเสียบลงรูบนแผงต่อวงจร</span>
+
+          <span class="hint-free hint-mouse" style="font-size:.75rem">เดินสายเชื่อมวงจร: ลากจากขาหนึ่งไปอีกขาหนึ่ง &nbsp;|&nbsp; คลิกที่สายเพื่อลบสายเส้นนั้น</span>
+          <span class="hint-free hint-touch" style="font-size:.75rem">เดินสายเชื่อมวงจร: แตะขาแรก แล้วแตะขาที่สอง &nbsp;|&nbsp; แตะที่สายเพื่อลบสายเส้นนั้น</span>
+
+          <span class="hint-board hint-mouse" style="font-size:.75rem">ขาอุปกรณ์ที่อยู่ในรางเดียวกันจะต่อถึงกันเอง (รางเรืองแสง = เชื่อมแล้ว) &nbsp;|&nbsp; เดินสายเพิ่ม: ลากจากขาหนึ่งไปอีกขาหนึ่ง</span>
+          <span class="hint-board hint-touch" style="font-size:.75rem">ขาอุปกรณ์ที่อยู่ในรางเดียวกันจะต่อถึงกันเอง (รางเรืองแสง = เชื่อมแล้ว) &nbsp;|&nbsp; เดินสายเพิ่ม: แตะขาแรก แล้วแตะขาที่สอง</span>
+          <span class="hint-board" style="font-size:.75rem">แถว A-E และ F-J แยกกันด้วยร่องกลาง &nbsp;·&nbsp; รางแดง (+) และรางน้ำเงิน (−) ต่อถึงกันตลอดแนว</span>
+
+          <span class="hint-mouse" style="font-size:.75rem">เลือกหลายชิ้นพร้อมกัน: ลากกรอบคุมดำบนพื้นที่ว่าง (Shift ค้าง = เพิ่มเข้าชุดเดิม) แล้วกด R หมุนทั้งหมด หรือ Del ลบทั้งหมด</span>
+          <span class="hint-mouse" style="font-size:.72rem;opacity:.75">คีย์ลัด: R หมุน &nbsp;·&nbsp; S สับสวิตช์ &nbsp;·&nbsp; C ตรวจวงจร &nbsp;·&nbsp; M เครื่องวัด &nbsp;·&nbsp; H คู่มือ &nbsp;·&nbsp; Del ลบ &nbsp;·&nbsp; Ctrl+A เลือกทั้งหมด &nbsp;·&nbsp; Ctrl+D คัดลอก</span>
+          <span class="hint-touch" style="font-size:.72rem;opacity:.85">แตะอุปกรณ์ 1 ครั้ง = มีปุ่ม หมุน/ลบ โผล่มา &nbsp;·&nbsp; แตะป้าย ON/OFF = สับสวิตช์ &nbsp;·&nbsp; ปุ่ม ↶ ย้อน มุมซ้ายบน = แก้ที่กดพลาด</span>
+        </div>
+
+        <!-- แถบสถานะความปลอดภัย — ขึ้นเองเมื่อมีอุปกรณ์เริ่มร้อนหรือพัง -->
+        <div id="hazard-bar" style="display:none;"></div>
+
+        <!-- ย้อนกลับ / ทำซ้ำ — ต้องมีปุ่มจริง ไม่ใช่มีแต่คีย์ลัด
+             เพราะบนมือถือไม่มีแป้นพิมพ์ และผู้เล่นมือถือคือกลุ่มที่กดพลาดบ่อยสุด
+
+             วางมุมซ้ายบนของพื้นที่ทำงาน: มุมขวาบนไม่ได้เพราะชนปุ่มลบ (x)
+             ของอุปกรณ์ที่วางไว้แถวนั้น · ขอบล่างก็ไม่ได้เพราะมีแถบคุมดำ
+             กับจอเครื่องวัดจองไว้แล้ว · ไม่ใส่ในแถบปุ่มคำสั่งด้านล่าง
+             เพราะบนจอ 400px ปุ่มสี่ตัวเดิมเต็มแถวพอดี เพิ่มอีกสองตัวจะตกบรรทัด
+             แล้วไปกินความสูงของพื้นที่ต่อวงจร (ดู js/history.js) -->
+        <div id="history-bar">
+          <button id="btn-undo" class="hist-btn" onclick="undoAction()" disabled>
+            <span class="hist-ico">&#x21B6;</span><span class="hist-label">ย้อน</span>
+          </button>
+          <button id="btn-redo" class="hist-btn" onclick="redoAction()" disabled>
+            <span class="hist-ico">&#x21B7;</span><span class="hist-label">ทำซ้ำ</span>
+          </button>
+          <!-- จัดเรียงอุปกรณ์ — อยู่แถบเดียวกับย้อน/ทำซ้ำ เพราะมันคือ
+               "คำสั่งจัดการแผง" เหมือนกัน และย้อนกลับได้ด้วย Ctrl+Z เหมือนกัน
+               แก้อาการที่หาสาเหตุเองแทบไม่ได้: วางของชิดกันจนขาแตะกัน
+               แล้วเกมบอกว่าลัดวงจร (ดู tidyWorkspace ใน js/workspace.js) -->
+          <button id="btn-tidy" class="hist-btn" onclick="tidyWorkspace()" disabled>
+            <span class="hist-ico">&#x25A6;</span><span class="hist-label">จัดเรียง</span>
+          </button>
+        </div>
+        <!-- Mobile floating toolbar -->
+        <div id="mobile-toolbar" style="display:none;position:absolute;z-index:20;background:rgba(10,22,40,.95);border:1px solid var(--border2);border-radius:10px;padding:6px 8px;gap:8px;flex-direction:row;box-shadow:0 4px 20px rgba(0,0,0,.5);">
+          <button onclick="G.selectedItemId&&rotateItem(G.selectedItemId)" style="background:var(--bg-card2);border:1px solid var(--border);color:var(--accent2);border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;">&#x21BA; หมุน</button>
+          <button onclick="var id=G.selectedItemId;if(id){deselectAll();removeWsItem(id);hideMobileToolbar();}" style="background:var(--danger);border:none;color:#fff;border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;">&#x2715; ลบ</button>
+          <button onclick="deselectAll();hideMobileToolbar();" style="background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:8px 14px;font-size:.85rem;cursor:pointer;">ยกเลิก</button>
+        </div>
+        <!-- กรอบคุมดำ — ลากบนพื้นที่ว่างเพื่อเลือกอุปกรณ์หลายชิ้นพร้อมกัน
+             (ดู startMarquee ใน js/workspace.js) -->
+        <div id="marquee" style="display:none;"></div>
+
+        <!-- แถบคำสั่งของกลุ่มที่เลือกไว้ — โผล่เองเมื่อเลือกตั้งแต่ 2 ชิ้นขึ้นไป
+             ใช้ได้ทั้งคอมและมือถือ (คอมกด R / Del ก็ได้ผลเดียวกัน) -->
+        <div id="multi-toolbar" style="display:none;">
+          <span id="multi-count">เลือกไว้ 0 ชิ้น</span>
+          <button class="mt-btn mt-rotate" onclick="rotateSelection()">&#x21BA; หมุนทั้งหมด <kbd>R</kbd></button>
+          <button class="mt-btn mt-del"    onclick="deleteSelection()">&#x2715; ลบทั้งหมด <kbd>Del</kbd></button>
+          <button class="mt-btn mt-cancel" onclick="deselectAll()">ยกเลิก</button>
+        </div>
+
+        <svg id="wire-svg" xmlns="http://www.w3.org/2000/svg">
+          <path id="wire-preview"/>
+        </svg>
+      </div>
+      <div id="action-bar">
+        <button class="btn-action btn-clear" onclick="clearWorkspaceByUser()"><span id="ic-clear"></span> ล้างพื้นที่</button>
+        <button class="btn-action" style="background:var(--bg-card);color:var(--accent2);border:1px solid var(--border);" onclick="G.selectedItemId?rotateItem(G.selectedItemId):showToast('คลิกเลือกอุปกรณ์ก่อน','error')"><span id="ic-rotate"></span> หมุน <small>(R)</small></button>
+        <button class="btn-action" id="btn-probe" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;" onclick="toggleProbeMode()"><span id="ic-probe"></span> เครื่องวัด</button>
+        <button class="btn-action btn-check" onclick="checkCircuit()"><span id="ic-check"></span> ตรวจวงจร</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- จอแสดงผลเครื่องวัด (ลอยมุมล่าง) — ค่าทั้งหมดมาจากการแก้สมการวงจรจริง -->
+  <div id="probe-display" style="display:none;">
+    <div class="probe-name" id="probe-target">ยังไม่ได้เลือก</div>
+    <div class="probe-screen">
+      <div class="probe-row"><span class="probe-lbl">แรงดัน</span><span class="probe-val" id="probe-voltage">-- V</span></div>
+      <div class="probe-row"><span class="probe-lbl">กระแส</span><span class="probe-val" id="probe-current">-- mA</span></div>
+      <div class="probe-row"><span class="probe-lbl">กำลังไฟ</span><span class="probe-val" id="probe-power">-- mW</span></div>
+    </div>
+    <div class="probe-hint" id="probe-hint">จิ้มที่สายไฟหรือตัวอุปกรณ์เพื่อวัด</div>
+  </div>
+
+  <!-- Popup เลือกขั้ว (เมื่อจุดมี 2 สีต่ออยู่) -->
+  <div id="polarity-picker" style="display:none;">
+    <div class="pp-title">จุดนี้มี 2 ขั้ว — เลือกขั้วที่จะต่อ</div>
+    <div class="pp-buttons">
+      <button class="pp-btn pp-pos" onclick="pickPolarity('+')">
+        <span class="pp-dot" style="background:#ff4444;"></span> ขั้วบวก (+)
+      </button>
+      <button class="pp-btn pp-neg" onclick="pickPolarity('-')">
+        <span class="pp-dot" style="background:#00aaff;"></span> ขั้วลบ (−)
+      </button>
+    </div>
+    <button class="pp-cancel" onclick="cancelPolarityPick()">ยกเลิก</button>
+  </div>
+</section>
+
+<!-- POST-TEST -->
+<section id="screen-posttest" class="screen">
+  <div class="test-container">
+    <h1><span id="win-ic"></span> ยินดีด้วย! ผ่านครบ 20 ด่านแล้ว</h1>
+    <p>กรุณากดปุ่มด้านล่างเพื่อทำแบบทดสอบหลังเรียน<br>เมื่อทำเสร็จแล้วให้กลับมาที่หน้านี้แล้วกดยืนยัน</p>
+
+    <!-- กระดานดาว — เติมโดย starsRenderBoard() ใน js/stars.js
+         กดที่ด่านไหนก็กลับไปเล่นซ้ำด่านนั้นได้ทันที -->
+    <div class="star-board" id="star-board" hidden></div>
+
+    <div class="form-link-box">
+      <a class="btn-form-link" id="posttest-link" href="Insert_Google_Form_URL_Here" target="_blank" rel="noopener" onclick="onFormLinkClick('posttest')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 3h7v7M21 3l-9 9M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/>
+        </svg>
+        <span id="post-ic"></span> เปิดแบบทดสอบหลังเรียน
+      </a>
+      <div class="form-status" id="posttest-status">
+        <span class="status-dot"></span>
+        <span id="posttest-status-text">ยังไม่ได้กดเข้าทำแบบทดสอบ</span>
+      </div>
+      <span class="form-hint">* ปุ่มจะเปิดแบบทดสอบในแท็บใหม่ และระบบจะปลดล็อกปุ่มยืนยันให้อัตโนมัติ</span>
+      <button class="form-manual" onclick="manualFormDone('posttest')">ทำแบบทดสอบแล้วแต่ปุ่มยังล็อกอยู่? แตะที่นี่</button>
+    </div>
+
+    <button class="btn-primary locked" id="posttest-confirm-btn" onclick="confirmPosttest()">
+      &#x2705; ส่งแบบทดสอบเรียบร้อยแล้ว
+    </button>
+
+    <!-- รางวัลปลดล็อกหลังเล่นครบทุกด่าน — JS เปิดให้เองใน updateModeButtons() -->
+    <div class="unlock-box" id="unlock-box" style="display:none;">
+      <div class="unlock-title">ปลดล็อกโหมดพิเศษแล้ว!</div>
+      <div class="unlock-sub">เล่นต่อได้ตามใจ ไม่กระทบคะแนนและความคืบหน้าของด่าน</div>
+      <div class="unlock-actions">
+        <button class="btn-unlock sandbox" onclick="enterSandbox()">
+          โหมดอิสระ<small>ทดลองต่อวงจรได้เต็มที่ อุปกรณ์ครบทุกชนิด</small>
+        </button>
+        <button class="btn-unlock endless" onclick="enterEndless()">
+          โหมดวัดความเร็ว<small>โจทย์สุ่มไม่มีที่สิ้นสุด แข่งทำคะแนนขึ้นตารางอันดับ</small>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL TUTORIAL -->
+<div id="modal-tutorial" class="modal-overlay">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-header">
+      <h3>&#x1F4D6; คู่มือ / ทบทวนความรู้</h3>
+      <button class="modal-close" onclick="closeModal('modal-tutorial')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="tutorial-img-box">
+        <img id="tutorial-img" src="Insert_image_URL_here" alt="ภาพประกอบ"
+             onerror="this.style.display='none';document.getElementById('tutorial-img-ph').style.display='flex'">
+        <div id="tutorial-img-ph">
+          <span style="font-size:3rem">&#x1F5BC;</span>
+          <span style="font-size:.8rem">ใส่รูปภาพประกอบการสอน</span>
+        </div>
+      </div>
+      <div id="tutorial-text-box">ใส่ข้อความสอน</div>
+    </div>
+    <!-- ปุ่มพลิกหน้าต้องอยู่นอก .modal-body — ถ้าอยู่ข้างในมันจะเลื่อนหนีไป
+         กับเนื้อหา พอหน้าไหนข้อความยาว ผู้เรียนจะหาปุ่ม "ถัดไป" ไม่เจอ -->
+    <div class="modal-footer tut-nav">
+      <!-- ทางเข้าด่านสอนแบบลงมือทำ — คู่มือหน้านี้เป็นตัวหนังสืออย่างเดียว
+           คนที่ยังต่อสายไม่เป็นต้องการ "พาทำ" ไม่ใช่ "พาอ่าน" (ดู js/coach.js) -->
+      <button class="btn-coach" onclick="coachFromMenu()">&#x1F393; สอนวิธีเล่น</button>
+      <button class="btn-tut" id="btn-tut-prev" onclick="changeTutPage(-1)">&#x25C4; ก่อนหน้า</button>
+      <span class="tut-page" id="tut-page-indicator">1 / 1</span>
+      <button class="btn-tut primary" id="btn-tut-next" onclick="changeTutPage(1)">ถัดไป &#x25BA;</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENDLESS OVER — หน้าจบรันโหมดวัดความเร็ว + ตารางอันดับ -->
+<div id="modal-endless-over" class="modal-overlay">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h3>จบรัน &#x2014; โหมดวัดความเร็ว</h3>
+      <!-- ปิดกล่องนี้ต้องพากลับเข้าด่านด้วย ไม่ใช่แค่ปิดกล่องเฉย ๆ
+           ไม่งั้นวงจรของรอบที่เพิ่งจบยังค้างอยู่บนจอ แต่เกมกลับไปเป็นโหมดด่านแล้ว
+           กด "ตรวจวงจร" ทีเดียวเสียชีวิตจริงของด่านนั้นทันที -->
+      <button class="modal-close" onclick="quitEndlessToLevels()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="eo-reason" id="eo-reason">&#x2014;</div>
+      <div class="eo-score" id="eo-score">0</div>
+      <div class="eo-sub" id="eo-sub">&#x2014;</div>
+
+      <div class="eo-save-row" id="eo-save-row">
+        <input class="eo-input" id="eo-name" type="text" maxlength="12"
+               placeholder="ใส่ชื่อของคุณ" autocomplete="off">
+        <button class="btn-confirm-ok" onclick="submitEndlessScore()">บันทึกคะแนน</button>
+      </div>
+
+      <div class="eo-board" id="eo-board"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm-cancel" onclick="quitEndlessToLevels()">กลับสู่ด่าน</button>
+      <button class="btn-confirm-ok" onclick="restartEndless()">เล่นอีกครั้ง</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL INCIDENT — รายงานเหตุการณ์เมื่อวงจรพัง
+     ตอบ 4 ข้อ: ต่อแบบนี้ / พังตรงไหน / อันตรายยังไง / ป้องกันยังไง -->
+<div id="modal-incident" class="modal-overlay">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-header incident-header">
+      <h3><span class="inc-bolt">&#x26A0;</span> <span id="incident-title">&#x2014;</span></h3>
+      <button class="modal-close" onclick="closeModal('modal-incident')">&#x2715;</button>
+    </div>
+    <div class="modal-body" id="incident-body"></div>
+    <div class="modal-footer">
+      <button class="btn-confirm-ok danger" onclick="closeModal('modal-incident')">เข้าใจแล้ว</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRM — กล่องยืนยันกลาง ใช้แทน confirm() ของเบราว์เซอร์
+     เรียกผ่าน showConfirm({...}) ใน js/ui.js -->
+<div id="modal-confirm" class="modal-overlay">
+  <div class="modal-box modal-confirm-box">
+    <div class="modal-header">
+      <h3 id="confirm-title">ยืนยัน</h3>
+      <button class="modal-close" onclick="closeConfirm(false)">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="confirm-icon" id="confirm-icon"></div>
+      <div class="confirm-msg" id="confirm-msg">&#x2014;</div>
+      <div class="confirm-detail" id="confirm-detail"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-confirm-cancel" id="confirm-cancel-btn" onclick="closeConfirm(false)">ยกเลิก</button>
+      <button class="btn-confirm-ok" id="confirm-ok-btn" onclick="closeConfirm(true)">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OHM — เลือกค่าตัวต้านทานในโหมดอิสระ
+     ค่าที่ให้เลือกมาจาก RESISTOR_OHMS (อนุกรม E12) ใน js/devices.js
+     เรียกผ่าน openOhmPicker(itemId) ใน js/workspace.js -->
+<div id="modal-ohm" class="modal-overlay">
+  <div class="modal-box modal-ohm-box">
+    <div class="modal-header">
+      <h3>เลือกค่าตัวต้านทาน</h3>
+      <button class="modal-close" onclick="closeModal('modal-ohm')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div class="ohm-note" id="ohm-note"></div>
+      <div class="ohm-grid" id="ohm-grid"></div>
+      <div class="ohm-foot">ทุกค่าเป็นค่ามาตรฐานอนุกรม E12 ที่มีขายจริง</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RESULT -->
+<div id="modal-result" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="result-header-title">ผลการตรวจสอบ</h3>
+      <button class="modal-close" onclick="closeModal('modal-result')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="result-icon">&#x2705;</div>
+      <div id="result-title">ถูกต้อง!</div>
+      <div id="result-msg">&#x2014;</div>
+      <!-- ดาวประจำด่าน — เติมโดย starsOnWin() ใน js/stars.js
+           ซ่อนไว้เสมอเมื่อตรวจไม่ผ่าน จะได้ไม่มีดาวของรอบก่อนค้างอยู่ -->
+      <div id="star-row" hidden></div>
+      <div class="result-stats">
+        <div class="stat-box"><div class="stat-val" id="stat-score">+100</div><div class="stat-lbl">คะแนน</div></div>
+        <div class="stat-box"><div class="stat-val" id="stat-time">&#x2014;</div><div class="stat-lbl">เวลา</div></div>
+        <div class="stat-box"><div class="stat-val" id="stat-wires">&#x2014;</div><div class="stat-lbl">จุดเชื่อม</div></div>
+      </div>
+      <div id="result-hint" style="font-size:.82rem;color:var(--text-dim);text-align:center;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action btn-clear" onclick="closeModal('modal-result')">ลองใหม่</button>
+      <button class="btn-primary" id="btn-next-level" onclick="nextLevel()">ด่านถัดไป &#x2192;</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- ============================================================
+     SCRIPTS — เรียงตามลำดับการพึ่งพา ห้ามสลับ
+       device-symbols  ฉีดไลบรารีรูปอุปกรณ์ (SVG) เข้า DOM
+       icons           ไอคอน UI + หัวใจ
+       devices         นิยามอุปกรณ์ + ชื่อจุด 
+       levels          ข้อมูล 20 ด่าน
+       analyze         ระบบวิเคราะห์วงจร (อ่านเป็นโครงข่ายจริง)
+       outcome         ตัดสินจาก "ผลที่ออกมา" โดยจ่ายไฟจำลองแล้ววัดจริง
+       circuit-check   ตรวจโครงสร้าง/ขั้ว และคำใบ้ของแต่ละด่าน
+       save            บันทึก/โหลดความคืบหน้าลง localStorage
+       sfx             เสียงเอฟเฟกต์ + ปุ่มปิดเสียง
+       bgm             เพลงพื้นหลัง + ปุ่มปิด/ระดับเสียง
+       state           ตัวแปรสถานะกลาง (G) + หน้าจอ + แบบทดสอบ
+       ui              ไอคอน/modal/toast
+       inventory       คลังอุปกรณ์ + drag & drop
+       workspace       อุปกรณ์บนพื้นที่ทำงาน + หมุน + เลือก + สับสวิตช์
+       wires           ระบบสายไฟ + ลงสีตามขั้ว
+       history         ย้อนกลับ/ทำซ้ำ (Ctrl+Z / Ctrl+Y)
+       solver          แก้สมการวงจรจริง (Nodal Analysis) — หัวใจของค่าไฟฟ้า
+       breadboard      แผงต่อวงจรจริง: รูเสียบ รางจ่ายไฟ และรางที่นำไฟได้
+       probe           จำลองการทำงานตามเวลาจริง + เครื่องวัด
+       hazard          ความร้อนสะสม ความเสียหาย และรายงานอันตราย
+       damage          ตัวประสานระหว่างเกมกับระบบความเสียหาย
+       sandbox         โหมดอิสระ (เล่นทดลองไม่จำกัด)
+       endless         โหมดวัดความเร็ว + ตัวสุ่มโจทย์ + ตารางอันดับ
+       game            วงจรการเล่นหลัก + คีย์ลัด
+
+       ── สามไฟล์ท้ายนี้เป็นชั้นเสริม อ่านสถานะจาก G เอาเอง ──
+       ── ไฟล์อื่นไม่รู้จักมัน ถอดออกแล้วเกมยังเล่นได้ครบ ──
+       coach           ด่านสอนจับมือทำ (สอนคนละท่าระหว่างมือถือ/คอม)
+                       + ตัวเฝ้าดูว่าผู้เล่นติดแล้วยื่นความช่วยเหลือ
+       goalbar         แถบโจทย์พับเก็บได้บนจอแคบ
+       stars           ดาวประจำด่าน + กระดานดาวบนหน้าจบ
+     ============================================================ -->
+<script src="js/device-symbols.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/devices.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/analyze.js"></script>
+<script src="js/outcome.js"></script>
+<script src="js/circuit-check.js"></script>
+<script src="js/save.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/bgm.js"></script>
+<script src="js/state.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/workspace.js"></script>
+<script src="js/wires.js"></script>
+<!-- ย้อนกลับ/ทำซ้ำ — ต้องอยู่หลัง workspace.js กับ wires.js
+     เพราะ restoreCircuit() เรียก addWsItem / addWire / clearWorkspace ของสองไฟล์นั้น
+     (เรียกตอนรันไทม์ ลำดับจึงไม่บังคับ แต่วางไว้ให้อ่านง่ายว่าพึ่งใคร) -->
+<script src="js/history.js"></script>
+<script src="js/solver.js"></script>
+<script src="js/breadboard.js"></script>
+<script src="js/probe.js"></script>
+<script src="js/hazard.js"></script>
+<script src="js/damage.js"></script>
+<script src="js/sandbox.js"></script>
+<script src="js/endless.js"></script>
+<script src="js/game.js"></script>
+<!-- ด่านสอนแบบจับมือทำ — ต้องอยู่ท้ายสุด เพราะอ่านสถานะจาก G และเรียก
+     loadLevel()/showScreen() ของไฟล์ก่อนหน้า (ดู js/coach.js) -->
+<script src="js/coach.js"></script>
+<!-- แถบโจทย์พับเก็บได้บนจอแคบ (ดู js/goalbar.js) -->
+<script src="js/goalbar.js"></script>
+<!-- ดาวประจำด่าน — เก็บแยกจากไฟล์เซฟหลัก (ดู js/stars.js) -->
+<script src="js/stars.js"></script>
+
+</body>
+</html>
