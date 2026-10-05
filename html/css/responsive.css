@@ -1,0 +1,122 @@
+@charset "UTF-8";
+/* ============================================================
+   RESPONSIVE — เลย์เอาต์สำหรับมือถือ/แท็บเล็ต
+   *** ไฟล์นี้ต้องโหลดเป็นไฟล์สุดท้าย เพื่อให้ทับค่าเดิมได้ ***
+   ============================================================ */
+
+@media(max-width:640px){
+  /* inventory เป็น bottom strip */
+  #game-main{flex-direction:column;padding:6px;gap:6px;}
+  #inventory{
+    width:100%;min-width:unset;max-height:120px;
+    flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;
+    padding:6px;gap:6px;order:2;
+  }
+  #inventory h3{display:none;}
+  .inv-category{display:none;}
+  .inv-item{min-width:70px;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;}
+  .inv-item-name{font-size:.58rem;text-align:center;}
+  #workspace-wrap{order:1;flex:1;}
+
+  /* header กระชับ */
+  #game-header{padding:6px 10px;gap:8px;}
+  #game-header h2{display:none;}
+  .hud-item{padding:4px 8px;min-width:50px;}
+  .hud-value{font-size:.9rem;}
+  /* ปุ่มเสียงบนมือถือกดด้วยนิ้ว ต้องใหญ่กว่าบนเมาส์
+     40px ยังไม่ถึง 44px ตามเกณฑ์เป้าสัมผัส แต่แถบหัวเตี้ยกว่านั้นทั้งแถบ
+     ขยายเกินนี้จะดันแถบสูงขึ้นแล้วไปกินพื้นที่ต่อวงจร ซึ่งสำคัญกว่า */
+  .btn-sound{width:40px;height:40px;}
+  .btn-sound .sound-ico{font-size:1.15rem;}
+  /* แถบเลื่อนเสียงเพลงซ่อนบนมือถือ — ลากแถบแคบ ๆ ด้วยนิ้วบนแถบหัวที่แน่นอยู่แล้ว
+     พลาดไปโดนปุ่มข้าง ๆ มากกว่าจะได้ปรับจริง เหลือแค่ปุ่มเปิด/ปิดก็พอ
+     (ระดับเสียงที่ตั้งไว้จากคอมยังถูกจำไว้และใช้ต่อบนมือถือ) */
+  .bgm-vol{display:none;}
+
+  /* action bar ปุ่มใหญ่ขึ้น */
+  #action-bar{gap:6px;}
+  .btn-action{padding:10px 14px;font-size:.8rem;}
+
+  /* ปุ่มย้อนกลับ/ทำซ้ำ บนมือถือ — 48px สูงกว่าเกณฑ์เป้าสัมผัสขั้นต่ำ 44px
+     ขอบเรืองฟ้ากับพื้นทึบเข้ม ให้อ่านออกแม้ทับอยู่บนอุปกรณ์หรือสายไฟ
+     เพราะนี่คือปุ่มที่ต้องหาเจอทันทีตอนกดพลาด ไม่ใช่ปุ่มที่ค่อย ๆ มองหา */
+  #history-bar{top:6px;left:6px;gap:8px;}
+  .hist-btn{
+    min-height:48px;padding:0 16px;font-size:.86rem;border-radius:12px;
+    border-width:2px;
+    box-shadow:0 3px 16px rgba(0,0,0,.65), 0 0 14px rgba(0,212,255,.35);
+  }
+  .hist-ico{font-size:1.45rem;}
+
+  /* level bar จุดเล็กลง */
+  .level-dot{width:24px;height:24px;font-size:.65rem;}
+
+  /* ws-item ใหญ่ขึ้นสำหรับนิ้วกด — ยังต้องเป็นจัตุรัสและจุดขั้วอยู่ห่าง
+     ขอบกล่องเท่ากันทุกทิศ ไม่งั้นขาจะลงรูเบรดบอร์ดไม่ตรง
+     (ระยะห่างรูวัดจากอุปกรณ์จริงตอนเริ่มเกม จึงปรับตามอัตโนมัติ) */
+  .ws-item{width:68px;height:68px;padding:5px;}
+  .port{width:16px;height:16px;}
+  /* เหลือแค่ซ้าย-ขวา เพราะสองกฎนี้คือตัวที่ bbMeasurePitch() ใช้วัดขนาดช่องของแผง
+     (ทิศบน-ล่างไม่ต้องมี จุดขั้วจริงทุกจุดวางด้วย inline style จาก layoutPorts) */
+  .port.port-left  {left:-10px;    top:50%;}
+  .port.port-right {right:-10px;   top:50%;}
+  /* เลขคู่เหมือนกัน เพื่อให้กึ่งกลางวงกลมตกที่พิกเซลเต็ม
+     กล่อง 20 → ในกรอบ 16 → เครื่องหมาย 12 → แท่งหนา 4 → (12−4)/2 = 4 ลงตัว */
+  .port.port-pos,.port.port-neg{width:20px;height:20px;}
+  .port.port-pos::after,.port.port-neg::after{width:12px;height:12px;}
+  .port.port-neg::after{background-size:12px 4px;}
+  .port.port-pos::after{background-size:12px 4px, 4px 12px;}
+  /* นิ้วต้องการเป้าใหญ่กว่าเมาส์ — ขยายพื้นที่รับสัมผัสตอนต่อสาย */
+  .port::before{width:38px;height:38px;}
+
+  /* จุดขั้วบนมือถือใหญ่กว่า (16-19px) ป้ายชื่อจึงต้องหลบลงไปอีก
+     ไม่งั้นขาที่อยู่ก้นอุปกรณ์จะทับชื่อ (ดู .has-port-bottom ใน css/components.css) */
+  .ws-item.has-port-bottom .ws-item-name{top:calc(100% + 26px);}
+
+  /* mobile toolbar แสดงปุ่มหมุน/ลบ ใต้ item ที่เลือก */
+  /* ต้องมี :not(...) เหมือนใน components.css — ไฟล์นี้โหลดท้ายสุด
+     ถ้าเผลอตั้ง bottom ให้ป้ายสถานะที่มี top อยู่แล้ว ป้ายจะยืดเป็นแท่งสูง
+     คลุมทั้งอุปกรณ์ตอนกด/ลาก (เห็นเฉพาะตอนนั้น จึงหาต้นเหตุยาก) */
+  .ws-item.selected:not(.failed):not(.fuse-blown):not(.risk-warn)::after{
+    bottom:-44px;font-size:.62rem;padding:2px 8px;
+  }
+  .ws-item.has-port-bottom.selected:not(.failed):not(.fuse-blown):not(.risk-warn)::after{
+    bottom:-62px;
+  }
+
+  /* ป้ายบนตัวอุปกรณ์ต้องใหญ่พอให้ปลายนิ้วกดโดน
+     ของเดิมป้าย ON/OFF สูงราว 16px ซึ่งเล็กกว่าครึ่งหนึ่งของเป้าที่นิ้วกดแม่น
+     กดพลาดไปโดนตัวอุปกรณ์แทนจนกลายเป็นการลากย้าย = "กดเปิดปิดสวิตช์ไม่ติด"
+     ที่นี่ขยายทั้งตัวป้ายและเป้ารับสัมผัสใส ๆ รอบป้าย (::before) */
+  /* ป้าย ON/OFF เป็นข้อความ ขยายด้วย font+padding แล้วเผื่อเป้ารับสัมผัส
+     รอบป้ายอีก 13px เพราะตัวป้ายเองยังสูงไม่ถึงขนาดที่นิ้วกดแม่น */
+  .ws-switch-state{font-size:.62rem;padding:3px 6px;top:-12px;left:-12px;}
+  .ws-switch-state::before{inset:-13px;}
+
+  /* ปุ่ม Ω กับปุ่มคัดลอกเป็นจัตุรัส ขยายตัวปุ่มเป็น 26px ได้ตรง ๆ
+     จึงเผื่อเป้ารอบปุ่มแค่ 7px — ถ้าเผื่อ 13px เท่าป้ายข้อความ
+     เป้าของสองปุ่มจะทับกันเอง และล้นไปคลุมขั้วที่อยู่ข้างเคียง */
+  .ws-ohm-state{width:26px;height:26px;font-size:.9rem;top:-12px;left:-12px;}
+  .ws-item-dup{width:26px;height:26px;font-size:.95rem;}
+  .ws-ohm-state::before,.ws-item-dup::before{inset:-7px;}
+  .ws-item.dup-top    .ws-item-dup{top:-13px;}
+  .ws-item.dup-bottom .ws-item-dup{bottom:-13px;}
+  .ws-item.dup-left   .ws-item-dup{left:-13px;}
+  .ws-item.dup-right  .ws-item-dup{right:-13px;}
+
+  /* ตารางค่าตัวต้านทาน 4 คอลัมน์แคบไปบนจอมือถือ ลดเหลือ 3 ให้อ่านเลขออก */
+  .ohm-grid{grid-template-columns:repeat(3,1fr);gap:9px;}
+  .ohm-opt{height:54px;font-size:.82rem;}
+
+  /* modal เป็นแผ่นเลื่อนขึ้นจากขอบล่าง
+     เพดานความสูงต้องต่ำกว่าจอ ไม่ใช่เต็มจอ — เว้นขอบบนไว้ให้เห็นว่า
+     ยังมีหน้าเกมอยู่ข้างหลัง และกันไม่ให้หัวกล่องมุดใต้แถบที่อยู่ของเบราว์เซอร์
+     (ตัวเลื่อนเนื้อหาอยู่ที่ .modal-body ใน css/modals.css แล้ว) */
+  .modal-box{max-width:100%!important;border-radius:14px 14px 0 0;position:fixed;bottom:0;left:0;right:0;margin:0;max-height:90vh;max-height:90dvh;}
+  .modal-overlay{align-items:flex-end;padding:0;}
+}
+
+@media(max-width:400px){
+  .btn-action small{display:none;}
+  .hud-label{display:none;}
+}
